@@ -316,6 +316,24 @@ function SortScreen() {
         </div>
       </div>
 
+      <div className={styles.resourceBar}>
+        <span className={styles.resourceBarLabel}>Reference docs</span>
+        <div className={styles.resourceLinks}>
+          <a href="https://support.clever.com/hc/s/articles/000001590?language=en_US" target="_blank" rel="noopener noreferrer" className={styles.resourceLink}>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            PowerSchool Plugin Sync
+          </a>
+          <a href="https://support.clever.com/hc/s/articles/226677767?language=en_US" target="_blank" rel="noopener noreferrer" className={styles.resourceLink}>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            Infinite Campus API Sync
+          </a>
+          <a href="https://support.clever.com/hc/s/articles/205783078?language=en_US" target="_blank" rel="noopener noreferrer" className={styles.resourceLink}>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            SFTP Syncs: Overview
+          </a>
+        </div>
+      </div>
+
       {done && (
         <div className={styles.restartFooter}>
           <button className={styles.restartFooterBtn} onClick={() => window.location.reload()}>
