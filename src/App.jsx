@@ -14,7 +14,7 @@ function IntroScreen({ onStart }) {
       <div className={styles.introContent}>
         <div className={styles.introLogo}>
           <svg width="120" height="36" viewBox="0 0 120 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <text x="0" y="30" fontFamily="DM Sans, sans-serif" fontWeight="700" fontSize="32" fill="#1464FF">clever</text>
+            <text x="0" y="30" fontFamily="DM Sans, sans-serif" fontWeight="700" fontSize="32" fill="#1464FF">Clever</text>
           </svg>
         </div>
         <div className={styles.introTag}>SIS Sync Training</div>
@@ -73,16 +73,16 @@ function SortCard({ card, onDragStart, shake }) {
 }
 
 /* ─── Drop Zone ─────────────────────────────────────────── */
-function DropZone({ category, onDrop, isOver, setIsOver, placedCards }) {
+function DropZone({ category, onDrop, isOver, setIsOver, placedCards, reviewMode, onCardClick, expandedCardId }) {
   const colorMap = { 'SFTP Syncs': 'sftp', 'API Syncs': 'api', 'Both': 'both' };
   const variant = colorMap[category];
 
   return (
     <div
       className={`${styles.dropZone} ${styles[`dropZone_${variant}`]} ${isOver ? styles.dropZoneOver : ''}`}
-      onDragOver={(e) => { e.preventDefault(); setIsOver(true); }}
+      onDragOver={(e) => { if (!reviewMode) { e.preventDefault(); setIsOver(true); } }}
       onDragLeave={() => setIsOver(false)}
-      onDrop={(e) => { e.preventDefault(); setIsOver(false); onDrop(e, category); }}
+      onDrop={(e) => { e.preventDefault(); setIsOver(false); if (!reviewMode) onDrop(e, category); }}
     >
       <div className={styles.dropZoneHeader}>
         <span className={`${styles.dropZoneDot} ${styles[`dot_${variant}`]}`} />
@@ -94,17 +94,27 @@ function DropZone({ category, onDrop, isOver, setIsOver, placedCards }) {
           <div className={styles.dropZonePlaceholder}>Drop cards here</div>
         )}
         {placedCards.map((item) => (
-          <div
-            key={item.card.id}
-            className={`${styles.placedCard} ${item.correct ? styles.placedCorrect : styles.placedWrong}`}
-          >
-            <div className={styles.placedIcon}>
-              {item.correct
-                ? <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7l3.5 3.5L12 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                : <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
-              }
+          <div key={item.card.id}>
+            <div
+              className={`${styles.placedCard} ${item.correct ? styles.placedCorrect : styles.placedWrong} ${reviewMode ? styles.placedClickable : ''} ${expandedCardId === item.card.id ? styles.placedExpanded : ''}`}
+              onClick={() => reviewMode && onCardClick(item.card.id)}
+            >
+              <div className={styles.placedIcon}>
+                {item.correct
+                  ? <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7l3.5 3.5L12 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  : <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+                }
+              </div>
+              <span className={styles.placedText}>{item.card.text}</span>
+              {reviewMode && (
+                <svg className={styles.placedChevron} style={{ transform: expandedCardId === item.card.id ? 'rotate(180deg)' : 'rotate(0deg)' }} width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              )}
             </div>
-            <span className={styles.placedText}>{item.card.text}</span>
+            {reviewMode && expandedCardId === item.card.id && (
+              <div className={styles.placedExplanation}>
+                {item.card.explanation}
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -112,25 +122,32 @@ function DropZone({ category, onDrop, isOver, setIsOver, placedCards }) {
   );
 }
 
-/* ─── Feedback Toast ────────────────────────────────────── */
-function FeedbackToast({ feedback, onDismiss }) {
+/* ─── Feedback Panel (centered, prominent) ──────────────── */
+function FeedbackPanel({ feedback, onDismiss }) {
   if (!feedback) return null;
   return (
-    <div className={`${styles.toast} ${feedback.correct ? styles.toastCorrect : styles.toastWrong}`}>
-      <div className={styles.toastIcon}>
-        {feedback.correct
-          ? <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="9" fill="currentColor" opacity=".15"/><path d="M5 9l3 3 5-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-          : <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="9" fill="currentColor" opacity=".15"/><path d="M6 6l6 6M12 6l-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
-        }
+    <>
+      <div className={styles.feedbackOverlay} onClick={onDismiss} />
+      <div className={`${styles.feedbackPanel} ${feedback.correct ? styles.feedbackCorrect : styles.feedbackWrong}`}>
+        <div className={styles.feedbackIconRow}>
+          {feedback.correct
+            ? <div className={styles.feedbackIconCircle} style={{ background: 'rgba(78,204,151,0.15)' }}>
+                <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M6 14l5.5 5.5L22 8" stroke="#4ECC97" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              </div>
+            : <div className={styles.feedbackIconCircle} style={{ background: 'rgba(255,100,100,0.12)' }}>
+                <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M8 8l12 12M20 8L8 20" stroke="#ff6464" strokeWidth="2.5" strokeLinecap="round"/></svg>
+              </div>
+          }
+          <strong className={styles.feedbackHeading}>
+            {feedback.correct ? 'Correct!' : `Not quite — that belongs in ${feedback.correct_answer}`}
+          </strong>
+        </div>
+        <p className={styles.feedbackExplanation}>{feedback.explanation}</p>
+        <button className={styles.feedbackBtn} onClick={onDismiss}>
+          {feedback.correct ? 'Next Card →' : 'Try Again →'}
+        </button>
       </div>
-      <div className={styles.toastBody}>
-        <strong>{feedback.correct ? 'Correct!' : `Not quite — that's ${feedback.correct_answer}`}</strong>
-        <p>{feedback.explanation}</p>
-      </div>
-      <button className={styles.toastClose} onClick={onDismiss} aria-label="Dismiss">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
-      </button>
-    </div>
+    </>
   );
 }
 
@@ -147,67 +164,8 @@ function ProgressBar({ total, placed }) {
   );
 }
 
-/* ─── Completion Screen ─────────────────────────────────── */
-function CompletionScreen({ results, onReview, onRestart }) {
-  const correct = results.filter(r => r.correct).length;
-  const total = results.length;
-  return (
-    <div className={styles.completion}>
-      <div className={styles.completionCard}>
-        <div className={styles.completionEmoji}>🎉</div>
-        <h2 className={styles.completionTitle}>Activity Complete!</h2>
-        <p className={styles.completionSub}>
-          You placed all {total} cards correctly.
-        </p>
-        <p className={styles.completionNote}>
-          {correct === total
-            ? "Perfect run — you nailed every card on the first try!"
-            : `You got ${correct} of ${total} right on the first try. Review below to reinforce the tricky ones.`
-          }
-        </p>
-        <div className={styles.completionBtns}>
-          <button className={styles.reviewBtn} onClick={onReview}>Review All Cards</button>
-          <button className={styles.restartBtn} onClick={onRestart}>Sort Again</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ─── Review Screen ─────────────────────────────────────── */
-function ReviewScreen({ results, onRestart }) {
-  const colorMap = { 'SFTP Syncs': 'sftp', 'API Syncs': 'api', 'Both': 'both' };
-  return (
-    <div className={styles.review}>
-      <div className={styles.reviewHeader}>
-        <button className={styles.backBtn} onClick={onRestart}>
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-          Sort Again
-        </button>
-        <h2 className={styles.reviewTitle}>Answer Key</h2>
-        <span className={styles.reviewCount}>{results.length} cards</span>
-      </div>
-      <div className={styles.reviewGrid}>
-        {results.map(({ card, correct }) => {
-          const variant = colorMap[card.answer];
-          return (
-            <div key={card.id} className={`${styles.reviewCard} ${correct ? '' : styles.reviewCardMissed}`}>
-              <div className={styles.reviewCardTop}>
-                <span className={`${styles.reviewBadge} ${styles[`badge_${variant}`]}`}>{card.answer}</span>
-                {!correct && <span className={styles.reviewMissedTag}>Missed</span>}
-              </div>
-              <p className={styles.reviewCardText}>{card.text}</p>
-              <p className={styles.reviewCardExplanation}>{card.explanation}</p>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 /* ─── Sort Screen ───────────────────────────────────────── */
-function SortScreen({ onComplete }) {
+function SortScreen() {
   const [deck, setDeck] = useState(() => shuffle(CARDS));
   const [placed, setPlaced] = useState({ 'SFTP Syncs': [], 'API Syncs': [], 'Both': [] });
   const [feedback, setFeedback] = useState(null);
@@ -216,7 +174,7 @@ function SortScreen({ onComplete }) {
   const [shakeCard, setShakeCard] = useState(null);
   const [allResults, setAllResults] = useState([]);
   const [done, setDone] = useState(false);
-  const [showReview, setShowReview] = useState(false);
+  const [expandedCardId, setExpandedCardId] = useState(null);
   const feedbackTimer = useRef(null);
 
   const currentCard = deck[0] || null;
@@ -237,23 +195,20 @@ function SortScreen({ onComplete }) {
     const correct = card.answer === category;
 
     if (correct) {
-      // Remove from deck
       setDeck(prev => prev.filter(c => c.id !== card.id));
       setPlaced(prev => ({
         ...prev,
         [category]: [...prev[category], { card, correct: true }],
       }));
-      const newResult = { card, correct: true };
-      const newAllResults = [...allResults, newResult];
+      const newAllResults = [...allResults, { card, correct: true }];
       setAllResults(newAllResults);
       showFeedback({ correct: true, explanation: card.explanation });
 
       if (newAllResults.length === CARDS.length) {
         clearTimeout(feedbackTimer.current);
-        setTimeout(() => setDone(true), 800);
+        setTimeout(() => { setFeedback(null); setDone(true); }, 600);
       }
     } else {
-      // Shake the card, show wrong feedback, card stays in deck
       setShakeCard(card.id);
       setTimeout(() => setShakeCard(null), 500);
       showFeedback({ correct: false, correct_answer: card.answer, explanation: card.explanation });
@@ -263,27 +218,20 @@ function SortScreen({ onComplete }) {
   function showFeedback(fb) {
     clearTimeout(feedbackTimer.current);
     setFeedback(fb);
-    feedbackTimer.current = setTimeout(() => setFeedback(null), 5000);
   }
 
-  // Allow clicking zone buttons as alternative to drag
+  function dismissFeedback() {
+    clearTimeout(feedbackTimer.current);
+    setFeedback(null);
+  }
+
   function handleZoneClick(category) {
     if (!currentCard) return;
     processPlacement(currentCard, category);
   }
 
-  if (done && showReview) {
-    return <ReviewScreen results={allResults} onRestart={() => window.location.reload()} />;
-  }
-
-  if (done) {
-    return (
-      <CompletionScreen
-        results={allResults}
-        onReview={() => setShowReview(true)}
-        onRestart={() => window.location.reload()}
-      />
-    );
+  function handleCardClick(cardId) {
+    setExpandedCardId(prev => prev === cardId ? null : cardId);
   }
 
   return (
@@ -291,58 +239,67 @@ function SortScreen({ onComplete }) {
       <header className={styles.sortHeader}>
         <div className={styles.sortHeaderLogo}>
           <svg width="80" height="24" viewBox="0 0 80 24" fill="none">
-            <text x="0" y="20" fontFamily="DM Sans, sans-serif" fontWeight="700" fontSize="22" fill="#1464FF">clever</text>
+            <text x="0" y="20" fontFamily="DM Sans, sans-serif" fontWeight="700" fontSize="22" fill="#1464FF">Clever</text>
           </svg>
         </div>
         <ProgressBar total={CARDS.length} placed={totalPlaced} />
+        {done && <span className={styles.reviewModeBadge}>Review Mode</span>}
       </header>
 
+      {done && (
+        <div className={styles.doneBar}>
+          <span>🎉 All {CARDS.length} cards sorted! Click any card to see its explanation.</span>
+        </div>
+      )}
+
       <div className={styles.sortLayout}>
-        {/* Card Stack */}
-        <div className={styles.deckArea}>
-          <p className={styles.deckLabel}>
-            {currentCard ? `${deck.length} card${deck.length !== 1 ? 's' : ''} remaining` : 'All placed!'}
-          </p>
-          <div className={styles.deckStack}>
-            {deck.slice(0, 3).reverse().map((card, i, arr) => {
-              const isTop = i === arr.length - 1;
-              return (
-                <div key={card.id} className={styles.deckCardWrap} style={{ '--stack-i': arr.length - 1 - i }}>
-                  {isTop
-                    ? <SortCard card={card} onDragStart={handleDragStart} shake={shakeCard === card.id} />
-                    : <div className={styles.sortCardGhost} />
-                  }
+        {/* Card Stack — hidden in review mode */}
+        {!done && (
+          <div className={styles.deckArea}>
+            <p className={styles.deckLabel}>
+              {currentCard ? `${deck.length} card${deck.length !== 1 ? 's' : ''} remaining` : 'All placed!'}
+            </p>
+            <div className={styles.deckStack}>
+              {deck.slice(0, 3).reverse().map((card, i, arr) => {
+                const isTop = i === arr.length - 1;
+                return (
+                  <div key={card.id} className={styles.deckCardWrap} style={{ '--stack-i': arr.length - 1 - i }}>
+                    {isTop
+                      ? <SortCard card={card} onDragStart={handleDragStart} shake={shakeCard === card.id} />
+                      : <div className={styles.sortCardGhost} />
+                    }
+                  </div>
+                );
+              })}
+              {deck.length === 0 && (
+                <div className={styles.deckEmpty}>
+                  <svg width="40" height="40" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="19" stroke="#4ECC97" strokeWidth="2"/><path d="M12 20l6 6 10-12" stroke="#4ECC97" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  <span>All sorted!</span>
                 </div>
-              );
-            })}
-            {deck.length === 0 && (
-              <div className={styles.deckEmpty}>
-                <svg width="40" height="40" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="19" stroke="#4ECC97" strokeWidth="2"/><path d="M12 20l6 6 10-12" stroke="#4ECC97" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                <span>All sorted!</span>
+              )}
+            </div>
+
+            {currentCard && (
+              <div className={styles.clickBtns}>
+                <p className={styles.clickBtnsLabel}>Or click a category:</p>
+                <div className={styles.clickBtnRow}>
+                  {CATEGORIES.map(cat => (
+                    <button
+                      key={cat}
+                      className={styles.clickCatBtn}
+                      onClick={() => handleZoneClick(cat)}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
           </div>
-
-          {currentCard && (
-            <div className={styles.clickBtns}>
-              <p className={styles.clickBtnsLabel}>Or click a category:</p>
-              <div className={styles.clickBtnRow}>
-                {CATEGORIES.map(cat => (
-                  <button
-                    key={cat}
-                    className={styles.clickCatBtn}
-                    onClick={() => handleZoneClick(cat)}
-                  >
-                    {cat}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
+        )}
 
         {/* Drop Zones */}
-        <div className={styles.zonesArea}>
+        <div className={`${styles.zonesArea} ${done ? styles.zonesAreaFull : ''}`}>
           {CATEGORIES.map(cat => (
             <DropZone
               key={cat}
@@ -351,12 +308,24 @@ function SortScreen({ onComplete }) {
               isOver={!!overZone[cat]}
               setIsOver={(v) => setOverZone(prev => ({ ...prev, [cat]: v }))}
               placedCards={placed[cat]}
+              reviewMode={done}
+              onCardClick={handleCardClick}
+              expandedCardId={expandedCardId}
             />
           ))}
         </div>
       </div>
 
-      <FeedbackToast feedback={feedback} onDismiss={() => setFeedback(null)} />
+      {done && (
+        <div className={styles.restartFooter}>
+          <button className={styles.restartFooterBtn} onClick={() => window.location.reload()}>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8a6 6 0 1 1 1.5 4" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"/><path d="M2 12V8h4" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            Start Over
+          </button>
+        </div>
+      )}
+
+      <FeedbackPanel feedback={feedback} onDismiss={dismissFeedback} />
     </div>
   );
 }
