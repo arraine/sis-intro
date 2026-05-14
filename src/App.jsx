@@ -317,7 +317,7 @@ function SortScreen() {
       </div>
 
       <div className={styles.resourceBar}>
-        <span className={styles.resourceBarLabel}>Reference docs</span>
+        <span className={styles.resourceBarLabel}>Stuck? The answers are in here</span>
         <div className={styles.resourceLinks}>
           <a href="https://support.clever.com/hc/s/articles/000001590?language=en_US" target="_blank" rel="noopener noreferrer" className={styles.resourceLink}>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
